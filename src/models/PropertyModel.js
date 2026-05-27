@@ -15,10 +15,10 @@ const collectFeaturedProperties = (sortedDesc, limit, projectFields) => {
     return cursor;
 }
 
-const collectProperties = (limit, projectFields, sort) => {
+const collectProperties = (limit, projectFields, sort, filter) => {
     const database = getDatabase();
 
-    const cursor = database.collection("properties").find().sort(sort).limit(limit).project(projectFields);
+    const cursor = database.collection("properties").find(filter).sort(sort).limit(limit).project(projectFields);
 
     return cursor;
 }
@@ -56,7 +56,7 @@ const insertReview = async (review, userEmail, propertyId) => {
 
     const isReviewExists = await database.collection("reviews").findOne({
         email: userEmail,
-        propertyId: propertyId,
+        propertyId: new ObjectId(propertyId),
     })
 
     if (isReviewExists) {
@@ -77,4 +77,40 @@ const collectReviews = (filter) => {
     return cursor;
 }
 
-module.exports = { insertProperty, collectFeaturedProperties, collectProperties, collectMyProperties, collectPropertyDetails, changeMyProperty, insertReview, collectReviews };
+const collectMyRatings = (filter) => {
+    const database = getDatabase();
+
+    const cursor = database
+        .collection('reviews')
+        .aggregate([
+            {
+                $match: filter
+            },
+            {
+                $lookup: {
+                    from: 'properties',
+                    localField: 'propertyId',
+                    foreignField: '_id',
+                    as: 'property',
+                }
+            },
+            {
+                $unwind: '$property'
+            },
+            {
+                $project: {
+                    images: '$property.images',
+                    propertyName: '$property.propertyName',
+                    rating: 1,
+                    comment: 1,
+                    userName: 1,
+                    userPhoto: 1,
+                    createdAt: 1,
+                }
+            }
+        ]);
+
+    return cursor;
+}
+
+module.exports = { insertProperty, collectFeaturedProperties, collectProperties, collectMyProperties, collectPropertyDetails, changeMyProperty, insertReview, collectReviews, collectMyRatings };

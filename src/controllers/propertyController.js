@@ -1,5 +1,5 @@
 const { ObjectId } = require("mongodb");
-const { insertProperty, collectFeaturedProperties, collectProperties, collectMyProperties, collectPropertyDetails, changeMyProperty, insertReview, collectReviews } = require("./../models/PropertyModel");
+const { insertProperty, collectFeaturedProperties, collectProperties, collectMyProperties, collectPropertyDetails, changeMyProperty, insertReview, collectReviews, collectMyRatings } = require("./../models/PropertyModel");
 
 const addProperty = async (req, res) => {
     console.log(req.body.price, typeof req.body.price);
@@ -65,7 +65,16 @@ const getFeaturedProperties = async (req, res) => {
 
 const getProperties = async (req, res) => {
     try {
-        const sortedDesc = { price: 1 };
+        const search = req.query.search;
+        const sort = req.query.sort;
+        const filter = search ? {
+            propertyName: {
+                $regex: search,
+                $options: "i"
+            }
+        } : {};
+        let sorted = sort === 'price-asc' ? { price: 1 } : sort === 'price-desc' ? { price: -1 } : {createdAt: -1};
+        console.log(sorted);
         const limit = 12;
         const projectFields = {
             listingPurpose: 1,
@@ -80,7 +89,7 @@ const getProperties = async (req, res) => {
             price: 1,
         };
 
-        const cursor = collectProperties(limit, projectFields, sortedDesc);
+        const cursor = collectProperties(limit, projectFields, sorted, filter);
         const properties = await cursor.toArray();
 
         res.status(200).json({
@@ -88,10 +97,13 @@ const getProperties = async (req, res) => {
             message: "Properties retrieved successfully!",
             data: properties,
         });
-
-        console.log("Properties retrieved: ", properties);
     } catch (error) {
         console.log("Error getting property: ", error);
+        res.status(500).json({
+            success: false,
+            message: "Failed to retrieve property. Please try again.",
+            data: []
+        })
     }
 }
 
@@ -185,6 +197,7 @@ const addReview = async (req, res) => {
         const propertyId = req.body.propertyId;
         const newReview = {
             ...req.body,
+            propertyId: new ObjectId(req.body.propertyId),
             createdAt: new Date(),
         }
 
@@ -199,7 +212,7 @@ const addReview = async (req, res) => {
     catch(error) {
         console.log("Error adding review: ", error.message);
 
-        res.status(200).json({
+        res.status(500).json({
             success: false,
             message: error.message || "Failed to add review. Please try again.",
             data: [],
@@ -232,4 +245,26 @@ const getReviews = async (req, res) => {
     }
 }
 
-module.exports = { addProperty, getProperties, getFeaturedProperties, getMyProperties, getPropertyDetails, updateMyProperty, addReview, getReviews };
+const getMyRatings = async (req, res) => {
+    try {
+        const myEmail = req.query.email;
+        const filter = { email: myEmail }
+
+        const cursor = collectMyRatings(filter);
+        const myRatings = await cursor.toArray();
+
+        res.status(200).json({
+            success: true,
+            message: "Reviews retrieved successfully!",
+            data: myRatings,
+        }) 
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Failed to load ratings. Please try again.",
+            data: [],
+        })
+    }
+}
+
+module.exports = { addProperty, getProperties, getFeaturedProperties, getMyProperties, getPropertyDetails, updateMyProperty, addReview, getReviews, getMyRatings };
