@@ -1,5 +1,5 @@
 const { ObjectId } = require("mongodb");
-const { insertProperty, collectFeaturedProperties, collectProperties, collectMyProperties, collectPropertyDetails, changeMyProperty, insertReview, collectReviews, collectMyRatings } = require("./../models/PropertyModel");
+const { insertProperty, collectFeaturedProperties, collectProperties, collectMyProperties, collectPropertyDetails, changeMyProperty, removeMyProperty, insertReview, collectReviews, collectMyRatings } = require("./../models/PropertyModel");
 
 const addProperty = async (req, res) => {
     console.log(req.body.price, typeof req.body.price);
@@ -191,6 +191,35 @@ const updateMyProperty = async (req, res) => {
     }
 }
 
+const deleteMyProperty = async (req, res) => {
+    try {
+        const id = req.params.id;
+        const result = await removeMyProperty(id);
+
+        if(result.deletedCount === 1) {
+            res.status(200).json({
+                success: true,
+                message: "Property deleted successfully!",
+                data: []
+            })
+        } else {
+            res.status(404).json({
+                success: false,
+                message: "Property not found",
+                data: []
+            })
+        }
+    } catch (error) {
+        console.log("Error deleting property: ", error);
+
+        res.status(500).json({
+            success: false,
+            message: "Failed to delete property. Please try again.",
+            data: [],
+        })
+    }
+}
+
 const addReview = async (req, res) => {
     try {
         const userEmail = req.body.email;
@@ -267,4 +296,4 @@ const getMyRatings = async (req, res) => {
     }
 }
 
-module.exports = { addProperty, getProperties, getFeaturedProperties, getMyProperties, getPropertyDetails, updateMyProperty, addReview, getReviews, getMyRatings };
+module.exports = { addProperty, getProperties, getFeaturedProperties, getMyProperties, getPropertyDetails, updateMyProperty, deleteMyProperty, addReview, getReviews, getMyRatings };

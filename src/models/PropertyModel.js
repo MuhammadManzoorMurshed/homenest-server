@@ -51,6 +51,12 @@ const changeMyProperty = async (id, updatedMyProperty) => {
     return result;
 }
 
+const removeMyProperty = async (id) => {
+    const database = getDatabase();
+
+    return await database.collection("properties").deleteOne({ _id: new ObjectId(id) });
+}
+
 const insertReview = async (review, userEmail, propertyId) => {
     const database = getDatabase();
 
@@ -113,4 +119,4 @@ const collectMyRatings = (filter) => {
     return cursor;
 }
 
-module.exports = { insertProperty, collectFeaturedProperties, collectProperties, collectMyProperties, collectPropertyDetails, changeMyProperty, insertReview, collectReviews, collectMyRatings };
+module.exports = { insertProperty, collectFeaturedProperties, collectProperties, collectMyProperties, collectPropertyDetails, changeMyProperty, removeMyProperty, insertReview, collectReviews, collectMyRatings };
