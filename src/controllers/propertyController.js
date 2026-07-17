@@ -1,5 +1,5 @@
 const { ObjectId } = require("mongodb");
-const { insertProperty, collectFeaturedProperties, collectProperties, collectMyProperties, collectPropertyDetails, changeMyProperty, removeMyProperty, insertReview, collectReviews, collectMyRatings } = require("./../models/PropertyModel");
+const { insertProperty, collectFeaturedProperties, collectProperties, countProperties, collectMyProperties, collectPropertyDetails, changeMyProperty, removeMyProperty, insertReview, collectReviews, collectMyRatings } = require("./../models/PropertyModel");
 
 const addProperty = async (req, res) => {
     console.log(req.body.price, typeof req.body.price);
@@ -67,6 +67,9 @@ const getProperties = async (req, res) => {
     try {
         const search = req.query.search;
         const sort = req.query.sort;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 12;
+        const skip = (page - 1) * limit;
         const filter = search ? {
             propertyName: {
                 $regex: search,
@@ -75,7 +78,7 @@ const getProperties = async (req, res) => {
         } : {};
         let sorted = sort === 'price-asc' ? { price: 1 } : sort === 'price-desc' ? { price: -1 } : {createdAt: -1};
         console.log(sorted);
-        const limit = 12;
+        // const limit = 12;
         const projectFields = {
             listingPurpose: 1,
             firstImage: {
@@ -89,13 +92,16 @@ const getProperties = async (req, res) => {
             price: 1,
         };
 
-        const cursor = collectProperties(limit, projectFields, sorted, filter);
+        const cursor = collectProperties(limit, projectFields, sorted, filter, skip);
         const properties = await cursor.toArray();
+        const totalCount = await countProperties(filter);
 
         res.status(200).json({
             success: true,
             message: "Properties retrieved successfully!",
-            data: properties,
+            data: properties, totalCount,
+            totalPages: Math.ceil(totalCount / limit),
+            currentPage: page,
         });
     } catch (error) {
         console.log("Error getting property: ", error);

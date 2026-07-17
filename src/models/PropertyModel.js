@@ -15,12 +15,23 @@ const collectFeaturedProperties = (sortedDesc, limit, projectFields) => {
     return cursor;
 }
 
-const collectProperties = (limit, projectFields, sort, filter) => {
+const collectProperties = (limit, projectFields, sort, filter, skip = 0) => {
     const database = getDatabase();
 
-    const cursor = database.collection("properties").find(filter).sort(sort).limit(limit).project(projectFields);
+    const cursor = database.collection("properties")
+    .find(filter)
+    .sort(sort)
+    .skip(skip)
+    .limit(limit)
+    .project(projectFields);
 
     return cursor;
+}
+
+const countProperties = (filter) => {
+    const database = getDatabase();
+
+    return database.collection('properties').countDocuments(filter);
 }
 
 const collectMyProperties = (filter, sortedDesc, limit, projectFields) => {
@@ -119,4 +130,4 @@ const collectMyRatings = (filter) => {
     return cursor;
 }
 
-module.exports = { insertProperty, collectFeaturedProperties, collectProperties, collectMyProperties, collectPropertyDetails, changeMyProperty, removeMyProperty, insertReview, collectReviews, collectMyRatings };
+module.exports = { insertProperty, collectFeaturedProperties, collectProperties, countProperties, collectMyProperties, collectPropertyDetails, changeMyProperty, removeMyProperty, insertReview, collectReviews, collectMyRatings };
