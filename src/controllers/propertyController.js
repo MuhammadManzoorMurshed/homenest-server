@@ -176,7 +176,23 @@ const  getPropertyDetails = async (req, res) => {
 const updateMyProperty = async (req, res) => {
     try {
         const id = req.params.id;
+        const ownerEmail = req.decodedEmail;
         const updatedMyProperty = req.body;
+        const filter = { _id: new ObjectId(id) }
+
+        const property = await collectPropertyDetails(filter);
+
+        if(!property) {
+            return res.status(404).json({
+                message: "Property not found!",
+            });
+        }
+
+        if(property.contact.email !== ownerEmail) {
+            return res.status(403).json({
+                message: "Unauthorized forbidden access!",
+            })
+        }
 
         const result = await changeMyProperty(id, updatedMyProperty);
 
@@ -200,6 +216,23 @@ const updateMyProperty = async (req, res) => {
 const deleteMyProperty = async (req, res) => {
     try {
         const id = req.params.id;
+        const ownerEmail = req.decodedEmail;
+        const filter = { _id: new ObjectId(id) };
+
+        const property = await collectPropertyDetails(filter);
+
+        if(!property) {
+            return res.status(404).json({
+                message: "Property Not found!",
+            });
+        }
+
+        if(property.contact.email !== ownerEmail) {
+            return res.status(403).json({
+                message: "Unauthorized forbidden access!",
+            });
+        }
+
         const result = await removeMyProperty(id);
 
         if(result.deletedCount === 1) {
