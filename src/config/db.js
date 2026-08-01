@@ -1,5 +1,8 @@
 const { MongoClient, ServerApiVersion } = require('mongodb');
 
+const dns = require('dns');
+dns.setServers(['8.8.8.8', '1.1.1.1']);
+
 const uri = `mongodb+srv://${process.env.MONGODB_USERNAME}:${process.env.MONGODB_PASSWORD}@homenestdb.9ertdvu.mongodb.net/?appName=HomeNestDB`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
